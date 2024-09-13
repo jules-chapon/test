@@ -114,9 +114,7 @@ def main(argv):
     os.makedirs(kernel_path, exist_ok=True)
     branch = args.branch
     config = {
-        "id": str(
-            PurePosixPath(os.path.join(f"{kaggle_user['username']}"), notebook_id)
-        ),
+        "id": os.path.join(f"{kaggle_user['username']}", notebook_id),
         "title": notebook_id.lower(),
         "code_file": f"{notebook_id}.ipynb",
         "language": "python",
