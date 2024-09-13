@@ -1,7 +1,7 @@
 """Functions to initiate remote training"""
 
 import kaggle
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import json
 
 try:

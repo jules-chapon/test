@@ -3,7 +3,7 @@
 import sys
 import argparse
 from typing import Optional
-import logging
+from logger import logging
 
 from src.configs import constants, names, ml_config
 
