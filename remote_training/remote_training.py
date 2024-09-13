@@ -93,12 +93,12 @@ def main(argv):
     get_train_parser(parser)
     args = parser.parse_args(argv)
     notebook_id = args.notebook_id
-    exp_str = "_".join(f"{exp:04d}" for exp in args.exp)
+    exp_str = "_".join(f"exp_{exp:04d}" for exp in args.exp)
     kaggle_user = kaggle_users[args.user]
     uname_kaggle = kaggle_user["username"]
     kaggle.api._load_config(kaggle_user)
     if args.download:
-        tmp_dir = f"__tmp_{exp_str}"
+        tmp_dir = f"__tmp_{ exp_str }"
         os.makedirs(tmp_dir, exist_ok=True)
         kaggle.api.kernels_output_cli(
             f"{kaggle_user['username']}/{notebook_id}", path=str(tmp_dir)
@@ -109,8 +109,10 @@ def main(argv):
 
         shutil.rmtree(tmp_dir, ignore_errors=True)
         return
-    kernel_root = f"__nb_{uname_kaggle}"
+    kernel_root = f"__nb_{ uname_kaggle }"
     kernel_path = f"{ kernel_root }/{ exp_str }"
+    print(kernel_root)
+    print(kernel_path)
     os.makedirs(kernel_path, exist_ok=True)
     branch = args.branch
     config = {
