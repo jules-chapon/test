@@ -17,7 +17,7 @@ import os
 import sys
 import subprocess
 from src.configs import constants
-from train import get_parser as get_train_parser
+from src.model.train import get_parser as get_train_parser
 from typing import Optional
 
 
@@ -98,7 +98,7 @@ def main(argv):
     uname_kaggle = kaggle_user["username"]
     kaggle.api._load_config(kaggle_user)
     if args.download:
-        tmp_dir = constants.ROOT_DIR / f"__tmp_{exp_str}"
+        tmp_dir = f"__tmp_{exp_str}"
         tmp_dir.mkdir(exist_ok=True, parents=True)
         kaggle.api.kernels_output_cli(
             f"{kaggle_user['username']}/{notebook_id}", path=str(tmp_dir)
@@ -109,7 +109,7 @@ def main(argv):
 
         shutil.rmtree(tmp_dir, ignore_errors=True)
         return
-    kernel_root = constants.ROOT_DIR / f"__nb_{uname_kaggle}"
+    kernel_root = f"__nb_{uname_kaggle}"
     kernel_root.mkdir(exist_ok=True, parents=True)
 
     kernel_path = kernel_root / exp_str
