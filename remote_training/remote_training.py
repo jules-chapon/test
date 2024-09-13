@@ -110,12 +110,13 @@ def main(argv):
         shutil.rmtree(tmp_dir, ignore_errors=True)
         return
     kernel_root = f"__nb_{uname_kaggle}"
-
     kernel_path = os.path.join(kernel_root, exp_str)
     os.makedirs(kernel_path, exist_ok=True)
     branch = args.branch
     config = {
-        "id": str(PurePosixPath(f"{kaggle_user['username']}") / notebook_id),
+        "id": str(
+            PurePosixPath(os.path.join(f"{kaggle_user['username']}"), notebook_id)
+        ),
         "title": notebook_id.lower(),
         "code_file": f"{notebook_id}.ipynb",
         "language": "python",
@@ -130,13 +131,13 @@ def main(argv):
         "model_sources": [],
     }
     prepare_notebook(
-        (kernel_path / notebook_id).with_suffix(".ipynb"),
+        os.path.join(kernel_path, notebook_id) + ".ipynb",
         args.exp,
         branch,
         git_user=constants.GIT_USER,
         git_repo=constants.GIT_REPO,
     )
-    assert (kernel_path / notebook_id).with_suffix(".ipynb").exists()
+    assert os.path.exists(os.path.join(kernel_path, notebook_id) + ".ipynb")
     with open(kernel_path / "kernel-metadata.json", "w") as f:
         json.dump(config, f, indent=4)
 
