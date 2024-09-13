@@ -1,13 +1,15 @@
 """Class for model"""
 
 import abc
+import os
 import logging
 import typing
 import pandas as pd
 
-from src.configs import ml_config
+from src.configs import ml_config, constants, names
 
 from src.libs.preprocessing import (
+    load_data,
     preprocessing_learning_data,
     preprocessing_testing_data,
 )
@@ -24,20 +26,28 @@ _Model = typing.TypeVar("_Model", bound="Model")
 class Model(abc.ABC):
     """Abstract base class for ML models"""
 
-    def __init__(self, name: str, num_experiment: int | None) -> None:
-        self.name = name
+    def __init__(self, num_experiment: int | None) -> None:
         self.num_experiment = num_experiment
 
     def get_model_config(self: _Model) -> None:
         if self.num_experiment is not None:
             self.config = ml_config.EXPERIMENTS_CONFIGS[self.num_experiment]
         else:
-            self.config = {}
+            logging.info("No corresponding experiment")
+
+    def define_model_path(self: _Model) -> None:
+        self.model_path = os.path.join(
+            constants.OUTPUT_FOLDER,
+            f"{ self.num_experiment }_{ self.config[names.MODEL_TYPE] }",
+        )
+        os.makedirs(self.model_path, exist_ok=True)
 
     def learning_preprocessing(
         self: _Model, df_learning: pd.DataFrame
     ) -> tuple[pd.DataFrame]:
-        df_train, df_valid = preprocessing_learning_data(df_learning)
+        df_train, df_valid = preprocessing_learning_data(
+            df_learning, self.config["train_ratio"]
+        )
         return df_train, df_valid
 
     def testing_preprocessing(self: _Model, df_testing: pd.DataFrame) -> pd.DataFrame:
@@ -48,13 +58,15 @@ class Model(abc.ABC):
         return df.drop(columns=self.config["cols_id"])
 
     def selecting_features(self: _Model, df_train: pd.DataFrame) -> None:
-        if "random_columns" in self.config["feature_selection"]:
+        if self.config["features"] is None:
+            self.config["features"] = df_train.columns.tolist()
+        elif "random_columns" in self.config["feature_selection"]:
             self.config["features"] = selecting_features_with_random_columns(
                 df=df_train,
                 features=self.config["features"],
                 target=self.config["target"],
             )
-        if "boruta" in self.config["feature_selection"]:
+        elif "boruta" in self.config["feature_selection"]:
             self.config["features"] = selecting_features_with_boruta(
                 df=df_train,
                 features=self.config["features"],
@@ -62,18 +74,18 @@ class Model(abc.ABC):
             )
         return None
 
-    def dropping_useless_columns(
+    def getting_columns_to_keep(
         self: _Model,
         df_train: pd.DataFrame,
-        df_valid: pd.DataFrame,
-        df_test: pd.DataFrame,
     ) -> tuple[pd.DataFrame]:
         df_train_without_ids = self.dropping_id_columns(df=df_train)
         self.selecting_features(df_train=df_train_without_ids)
-        cols_to_keep = self.config["features"]
-        if isinstance(cols_to_keep, str):
-            cols_to_keep = [cols_to_keep]
-        return df_train[cols_to_keep], df_valid[cols_to_keep], df_test[cols_to_keep]
+        if isinstance(self.config["features"], str):
+            self.config["features"] = [self.config["features"]]
+        self.config["features"] = [
+            col for col in self.config["features"] if col not in self.config["target"]
+        ]
+        return None
 
     @abc.abstractmethod
     def fine_tuning(
@@ -121,15 +133,29 @@ class Model(abc.ABC):
         dict_scores["train"] = self.scoring(df_to_evaluate=df_train)
         dict_scores["valid"] = self.scoring(df_to_evaluate=df_valid)
         dict_scores["test"] = self.scoring(df_to_evaluate=df_test)
-        self.config["scores"] = dict_scores
+        self.scores = dict_scores
 
     @abc.abstractmethod
-    def saving_metric(self: _Model, metric_name: str) -> None:
+    def saving_config(
+        self: _Model,
+        output_dir: str | None,
+    ) -> None:
+        """
+        Save the config of the experiment.
+
+        Args:
+            self (_Model): Class instance.
+            output_dir (str | None): Directory to save the config.
+        """
+
+    @abc.abstractmethod
+    def saving_metric(self: _Model, output_dir: str | None, metric_name: str) -> None:
         """
         Save a given metric.
 
         Args:
             self (_Model): Class instance.
+            output_dir (str | None): Directory to save the metric.
             metric_name (str): Name of the metric to save.
         """
 
@@ -152,16 +178,18 @@ class Model(abc.ABC):
     def full_pipeline(
         self: _Model, df_learning: pd.DataFrame, df_testing: pd.DataFrame
     ) -> None:
+        df_learning = load_data()
+        df_testing = load_data()
         self.get_model_config()
+        self.define_model_path()
         df_train, df_valid = self.learning_preprocessing(df_learning)
         df_test = self.testing_preprocessing(df_testing)
-        df_train_clean, df_valid_clean, df_test_clean = self.dropping_useless_columns(
-            df_train, df_valid, df_test
-        )
-        self.fine_tuning(df_train_clean, df_valid_clean)
-        self.training(df_train_clean, df_valid_clean)
-        self.getting_scores(df_train_clean, df_valid_clean, df_test_clean)
-        for metric_name in [ml_config.METRICS_TO_SAVE]:
-            self.saving_metric(metric_name)
+        self.getting_columns_to_keep(df_train)
+        # self.fine_tuning(df_train, df_valid)
+        self.training(df_train, df_valid)
+        self.getting_scores(df_train, df_valid, df_test)
+        for metric_name in ml_config.METRICS_TO_SAVE:
+            self.saving_metric(output_dir=self.model_path, metric_name=metric_name)
+        self.saving_config(self.model_path)
         self.saving_model()
-        logging.info(f"Model { self.name } trained and saved.")
+        logging.info(f"Model { self.num_experiment } trained and saved.")

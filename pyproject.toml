@@ -9,6 +9,7 @@ package-mode = false
 [tool.poetry.dependencies]
 boruta = "^0.4.3"
 imblearn = "^0.0"
+kaggle = "^1.6.17"
 lightgbm = "^4.5.0"
 logger = "^1.4"
 numpy = "^2.1.0"

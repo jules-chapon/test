@@ -8,7 +8,7 @@
 
 ### MODELS
 
-MODEL = "model"
+MODEL_TYPE = "model_type"
 
 LIGHTGBM = "lightgbm"
 
