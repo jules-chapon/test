@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath
 import json
 
 try:
-    from __kaggle_login import kaggle_users
+    from remote_training.__kaggle_login import kaggle_users
 except ImportError:
     raise ImportError(
         "Please create a __kaggle_login.py file with a kaggle_users"
