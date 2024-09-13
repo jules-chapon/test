@@ -138,7 +138,7 @@ def main(argv):
         git_repo=constants.GIT_REPO,
     )
     assert os.path.exists(os.path.join(kernel_path, notebook_id) + ".ipynb")
-    with open(kernel_path / "kernel-metadata.json", "w") as f:
+    with open(os.path.join(kernel_path, "kernel-metadata.json"), "w") as f:
         json.dump(config, f, indent=4)
 
     if args.push:
