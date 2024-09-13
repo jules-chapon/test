@@ -93,7 +93,7 @@ def main(argv):
     get_train_parser(parser)
     args = parser.parse_args(argv)
     notebook_id = args.notebook_id
-    exp_str = "_".join(f"{exp:04d}" for exp in args.exp)
+    exp_str = "_".join(f"{exp:05d}" for exp in args.exp)
     kaggle_user = kaggle_users[args.user]
     uname_kaggle = kaggle_user["username"]
     kaggle.api._load_config(kaggle_user)
@@ -103,7 +103,9 @@ def main(argv):
         kaggle.api.kernels_output_cli(
             f"{kaggle_user['username']}/{notebook_id}", path=str(tmp_dir)
         )
-        subprocess.run(["tar", "-xzf", tmp_dir / "output.tgz", constants.OUTPUT_FOLDER])
+        subprocess.run(
+            ["tar", "-xzf", f"{ tmp_dir }/output.tgz", constants.OUTPUT_FOLDER]
+        )
         # @FIXME: windows probably does not have tar command
         import shutil
 
