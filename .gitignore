@@ -1,5 +1,6 @@
 
 __nb*
+__tmp*
 
 .ruff_cache
 .mypy_cache

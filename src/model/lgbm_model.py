@@ -92,7 +92,7 @@ class LGBMModel(Model):
         """
         if output_dir is not None:
             with open(os.path.join(output_dir, "config.json"), "w") as f:
-                json.dump(self.config, f)
+                json.dump(self.config, f, indent=4)
 
     def saving_metric(
         self: _LGBMModel, output_dir: str | None, metric_name: str
@@ -107,9 +107,9 @@ class LGBMModel(Model):
         if output_dir is not None:
             with open(os.path.join(output_dir, f"{ metric_name }.json"), "w") as f:
                 if metric_name == names.SCORES:
-                    json.dump(self.scores, f)
+                    json.dump(self.scores, f, indent=4)
                 elif metric_name == names.TRAINING_TIME:
-                    json.dump(self.training_time, f)
+                    json.dump(self.training_time, f, indent=4)
                 else:
                     logging.info(f"No metric named : { metric_name }")
 
