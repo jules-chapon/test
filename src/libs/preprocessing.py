@@ -4,15 +4,12 @@ import numpy as np
 import pandas as pd
 
 
-def load_data() -> pd.DataFrame:
-    df = pd.DataFrame(
-        {
-            "id": range(1000),
-            "feature_1": np.random.rand(1000),
-            "feature_2": np.random.rand(1000),
-            "target": np.random.randint(low=0, high=2, size=1000),
-        }
-    )
+def load_data(is_train: bool) -> pd.DataFrame:
+    if is_train:
+        filename = "train"
+    else:
+        filename = "test"
+    df = pd.read_csv(f"data/input/{filename}.csv")
     return df
 
 

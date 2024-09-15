@@ -63,7 +63,7 @@ def prepare_notebook(
     ),
     output_dir: str = constants.OUTPUT_FOLDER,
     dataset_files: Optional[list] = None,
-):
+) -> None:
     assert git_user is not None, "Please provide a git username for the repo"
     assert git_repo is not None, "Please provide a git repo name for the repo"
     expressions = [

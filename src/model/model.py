@@ -178,8 +178,6 @@ class Model(abc.ABC):
     def full_pipeline(
         self: _Model, df_learning: pd.DataFrame, df_testing: pd.DataFrame
     ) -> None:
-        df_learning = load_data()
-        df_testing = load_data()
         self.get_model_config()
         self.define_model_path()
         df_train, df_valid = self.learning_preprocessing(df_learning)

@@ -27,8 +27,8 @@ def get_parser(
 def train_main(argv):
     parser = get_parser()
     args = parser.parse_args(argv)
-    df_learning = load_data()
-    df_testing = load_data()
+    df_learning = load_data(is_train=True)
+    df_testing = load_data(is_train=False)
     for exp in args.exp:
         model = init_model_from_config(exp)
         logging.info(f"Training experiment { exp }")
