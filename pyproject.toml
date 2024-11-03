@@ -40,8 +40,8 @@ pulp = "^2.9.0"
 scipy = "^1.14.1"
 
 # Time series
-dtw = "^1.4.0"
-statsmodels = "^0.14.4"
+#dtw = "^1.4.0"
+#statsmodels = "^0.14.4"
 
 # Machine learning
 boruta = "^0.4.3"
@@ -51,10 +51,10 @@ optuna = "^4.0.0"
 scikit-learn = "^1.5.1"
 
 # Deep learning
-torch = "^2.3.1"
-torchaudio = "^2.3.1"
-torchvision = "^0.18.1"
-transformers = "^4.45.2"
+#torch = "^2.3.1"
+#torchaudio = "^2.3.1"
+#torchvision = "^0.18.1"
+#transformers = "^4.45.2"
 
 
 
