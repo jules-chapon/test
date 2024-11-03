@@ -117,7 +117,6 @@ def main(argv):
     kaggle_user = kaggle_users[args.user]
     uname_kaggle = kaggle_user["username"]
     kaggle.api._load_config(kaggle_user)
-
     if args.download:
         tmp_dir = f"__tmp_{exp_str}"
         os.makedirs(tmp_dir, exist_ok=True)
@@ -129,7 +128,6 @@ def main(argv):
         )
         shutil.rmtree(tmp_dir, ignore_errors=True)
         return
-
     kernel_root = f"__nb_{uname_kaggle}"
     kernel_path = f"{kernel_root}/{exp_str}"
     os.makedirs(kernel_path, exist_ok=True)
@@ -145,7 +143,6 @@ def main(argv):
     assert os.path.exists(f"{kernel_path}/{notebook_id}" + ".ipynb")
     with open(f"{kernel_path}/kernel-metadata.json", "w") as f:
         json.dump(config, f, indent=4)
-
     if args.push:
         kaggle.api.kernels_push_cli(str(kernel_path))
 

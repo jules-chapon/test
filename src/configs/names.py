@@ -9,13 +9,12 @@
 ### MODELS
 
 MODEL_TYPE = "model_type"
-
 LIGHTGBM = "lightgbm"
 
 ### METRICS
 
 SCORES = "scores"
-TRAINING_TIME = "training_time"
+TIMES = "times"
 
 ACCURACY = "accuracy"
 LOSS = "loss"
@@ -23,6 +22,8 @@ LOSS = "loss"
 ### FEATURES
 
 TARGET = "target"
+PREDICTION = "prediction"
+DIFFERENCE = "difference"
 FEATURES = "features"
 COLS_ID = "cols_id"
 

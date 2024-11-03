@@ -8,10 +8,11 @@ from sklearn.ensemble import RandomForestClassifier
 from logger import logging
 
 from src.configs import constants
+from src.configs.ml_config import TARGET
 
 
 def selecting_features_with_boruta(
-    df: pd.DataFrame, features: List[str] | None, target: str | None
+    df: pd.DataFrame, features: List[str] | None, target: str | None = TARGET
 ) -> List[str]:
     """
     Select features using Boruta.
@@ -42,7 +43,7 @@ def selecting_features_with_boruta(
 
 
 def selecting_features_with_random_columns(
-    df: pd.DataFrame, features: List[str] | None, target: str | None
+    df: pd.DataFrame, features: List[str] | None, target: str | None = TARGET
 ) -> List[str]:
     """
     Select features that have less importance than random ones.
@@ -86,4 +87,44 @@ def selecting_features_with_random_columns(
         feature for feature in selected_features if not feature.startswith("random")
     ]
     logging.info(f"Selected features with random columns : { selected_features }")
+    return selected_features
+
+
+def selecting_features_with_correlations(
+    df: pd.DataFrame, features: List[str] | None, target: str | None = TARGET
+) -> list:
+    """
+    Select feature based on correlations.
+    Keep features that are correlated with the target.
+    Remove features that are correlated with other features.
+
+    Args:
+        df (pd.DataFrame): Dataframe with features and target.
+        features (List[str] | None): List of features.
+        target (str | None, optional): Target column. Defaults to TARGET.
+
+    Returns:
+        list: Selected features with correlations.
+    """
+    correlation_with_label = (
+        df[features].corr(method=constants.CORR_TYPE)[target].drop(target)
+    )
+    threshold_label = constants.THRESHOLD_CORR_LABEL
+    selected_features = correlation_with_label[
+        correlation_with_label.abs() > threshold_label
+    ].index
+    correlation_matrix = df[selected_features].corr()
+    threshold_features = constants.THRESHOLD_CORR_FEATURE
+    to_drop = set()
+    for i in range(len(correlation_matrix.columns)):
+        for j in range(i):
+            if abs(correlation_matrix.iloc[i, j]) > threshold_features:
+                feature_to_drop = (
+                    correlation_matrix.columns[i]
+                    if abs(correlation_with_label[correlation_matrix.columns[i]])
+                    < abs(correlation_with_label[correlation_matrix.columns[j]])
+                    else correlation_matrix.columns[j]
+                )
+                to_drop.add(feature_to_drop)
+    selected_features = [f for f in selected_features if f not in to_drop]
     return selected_features
