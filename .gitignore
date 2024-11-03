@@ -1,4 +1,9 @@
 
+*.csv
+
+__nb*
+__tmp*
+
 .ruff_cache
 .mypy_cache
 
