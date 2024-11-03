@@ -3,7 +3,7 @@
 import sys
 import argparse
 from typing import Optional
-from logger import logging
+import logging
 
 from src.libs.preprocessing import load_data
 

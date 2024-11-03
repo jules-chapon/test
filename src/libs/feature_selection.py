@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from boruta import BorutaPy
 from sklearn.ensemble import RandomForestClassifier
-from logger import logging
+import logging
 
 from src.configs import constants
 from src.configs.ml_config import TARGET

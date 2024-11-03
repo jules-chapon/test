@@ -1907,16 +1907,6 @@ wheel = "*"
 dask = ["dask[array] (>=2.0.0)", "dask[dataframe] (>=2.0.0)", "dask[distributed] (>=2.0.0)", "pandas"]
 
 [[package]]
-name = "logger"
-version = "1.4"
-description = "Python logging helper"
-optional = false
-python-versions = "*"
-files = [
-    {file = "logger-1.4.tar.gz", hash = "sha256:4ecac57133c6376fa215f0fe6b4dc4d60e4d1ad8be005cab4e8a702df682f8b3"},
-]
-
-[[package]]
 name = "mako"
 version = "1.3.6"
 description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
@@ -4429,4 +4419,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "af1bb03ae1e907fcc3b5d0651c3f3e2cd99051b0bc50aafa7efa1ad2a9a6a54e"
+content-hash = "3dba149e54335f173accb0f5e6347ffbc97371d70da99be64943affe5768a37a"
