@@ -1,4 +1,7 @@
 
+*.json
+*.pkl
+
 *.csv
 
 __nb*
