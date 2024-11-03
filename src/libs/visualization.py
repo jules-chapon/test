@@ -10,14 +10,6 @@ from ipywidgets import fixed
 from src.configs import constants, ml_config, names
 
 
-from src.libs.preprocessing import load_data_from_local
-
-
-df_learning = load_data_from_local(True)
-
-df_testing = load_data_from_local(False)
-
-
 def plot_scatter_feature(
     df: pd.DataFrame,
     feature_name_1: str,

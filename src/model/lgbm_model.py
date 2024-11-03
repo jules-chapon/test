@@ -17,17 +17,11 @@ from src.configs import constants, ml_config, names
 
 from src.model.model import Model
 
-from src.libs.preprocessing import load_data_from_local
 
 from src.libs.visualization import plot_training_curves
 
 
 _LGBMModel = typing.TypeVar("_LGBMModel", bound="Model")
-
-
-df_learning = load_data_from_local(True)
-
-df_testing = load_data_from_local(False)
 
 
 class LGBMModel(Model):
