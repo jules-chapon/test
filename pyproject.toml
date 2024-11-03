@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "description"
 authors = ["Jules Chapon <jules.b.chapon@gmail.com>"]
 readme = "README.md"
-package-mode = true
+package-mode = false
 
 [tool.poetry.dependencies]
 
