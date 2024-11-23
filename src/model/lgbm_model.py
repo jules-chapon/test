@@ -1,21 +1,16 @@
 """Class for model"""
 
-import json
 import lightgbm as lgb
-import logging
 import os
 import optuna
-import pickle as pkl
 import typing
 import numpy as np
 import pandas as pd
-import time
 from collections import defaultdict
-from sklearn.metrics import accuracy_score
-
-from src.configs import constants, ml_config, names
 
 from src.model.model import Model
+
+from src.configs import ml_config, names
 
 
 from src.libs.visualization import plot_training_curves
@@ -28,18 +23,33 @@ class LGBMModel(Model):
     """Class for LGBM models"""
 
     def __init__(self: _LGBMModel, id_experiment: int | None) -> None:
+        """
+        Initialize the LGBM model.
+
+        Args:
+            self (_LGBMModel): Class instance.
+            id_experiment (int | None): ID of the experiment.
+        """
         super().__init__(id_experiment)
 
     def train(
         self: _LGBMModel,
         df_train: pd.DataFrame,
     ) -> None:
+        """
+        Train the model.
+
+        Args:
+            self (_LGBMModel): Class instance.
+            df_train (pd.DataFrame): Train set (whole learning set).
+        """
         evals_result = {}
         train_data = lgb.Dataset(
-            df_train[self.config["features"]], label=df_train[self.config["target"]]
+            df_train[self.config[names.FEATURES]],
+            label=df_train[self.config[names.TARGET]],
         )
         model = lgb.train(
-            params=self.config["training_params"],
+            params=self.config[names.TRAINING_PARAMS],
             train_set=train_data,
             valid_sets=train_data,
             valid_names="train",
@@ -55,7 +65,7 @@ class LGBMModel(Model):
             output_path=os.path.join(output_folder, "training_curves.png"),
         )
         scores = defaultdict(dict)
-        for metric in self.config["training_params"]["metrics"]:
+        for metric in self.config[names.TRAINING_PARAMS]["metrics"]:
             scores["train"][metric] = train_scores[metric]
         self.testing_scores["train"] = {
             "scores": scores["train"],
@@ -68,15 +78,27 @@ class LGBMModel(Model):
         df_train: pd.DataFrame,
         df_valid: pd.DataFrame,
     ) -> None:
+        """
+        Learning function.
+        Get the loss of the model on both train and valid sets.
+        Used to find the best hyperparameters of the model.
+
+        Args:
+            self (_LGBMModel): Class instance.
+            df_train (pd.DataFrame): Train set.
+            df_valid (pd.DataFrame): Valid set.
+        """
         evals_result = {}
         train_data = lgb.Dataset(
-            df_train[self.config["features"]], label=df_train[self.config["target"]]
+            df_train[self.config[names.FEATURES]],
+            label=df_train[self.config[names.TARGET]],
         )
         valid_data = lgb.Dataset(
-            df_valid[self.config["features"]], label=df_valid[self.config["target"]]
+            df_valid[self.config[names.FEATURES]],
+            label=df_valid[self.config[names.TARGET]],
         )
         model = lgb.train(
-            params=self.config["training_params"],
+            params=self.config[names.TRAINING_PARAMS],
             train_set=train_data,
             valid_sets=[train_data, valid_data],
             valid_names=["train", "valid"],
@@ -89,7 +111,7 @@ class LGBMModel(Model):
             "valid": evals_result["valid"],
         }
         for dataset in ["train", "valid"]:
-            for metric in self.config["training_params"]["metrics"]:
+            for metric in self.config[names.TRAINING_PARAMS]["metrics"]:
                 self.learning_scores[dataset][metric]["scores"].append(
                     scores[dataset][metric]
                 )
@@ -103,7 +125,15 @@ class LGBMModel(Model):
         df_valid: pd.DataFrame | None,
         trial: optuna.Trial,
     ) -> None:
-        params = self.config["training_params"].copy()
+        """
+        Define the objective function for the fine-tuning of the hyperparameters.
+
+        Args:
+            self (_LGBMModel): Class instance.
+            df_train (pd.DataFrame): Train set.
+            df_valid (pd.DataFrame): Valid set.
+        """
+        params = self.config[names.TRAINING_PARAMS].copy()
         params["learning_rate"] = trial.suggest_float(
             "learning_rate", 0.01, 0.3, log=True
         )
@@ -117,12 +147,12 @@ class LGBMModel(Model):
         if df_valid is None:
             self.cross_validate(df_train=df_train)
             return self.learning_scores["cross_validation"][
-                (self.config["training_params"]["metrics"])[0]
+                (self.config[names.TRAINING_PARAMS]["metrics"])[0]
             ]["average_score"]
         else:
             self.learn(df_train=df_train, df_valid=df_valid)
             return self.learning_scores["valid"][
-                (self.config["training_params"]["metrics"])[0]
+                (self.config[names.TRAINING_PARAMS]["metrics"])[0]
             ]["best_scores"][0]
 
     def fine_tune(
@@ -134,6 +164,7 @@ class LGBMModel(Model):
         Fine-tune hypermarameters of the model.
 
         Args:
+            self (_LGBMModel) : Class instance.
             df_train (pd.DataFrame): Training set.
             df_valid (pd.DataFrame): Validation set.
         """
@@ -141,9 +172,9 @@ class LGBMModel(Model):
         study = optuna.create_study(direction="minimize")
         study.optimize(
             lambda trial: self.fine_tuning_objective(df_train, df_valid, trial),
-            n_trials=3,
+            n_trials=ml_config.NB_OPTUNA_TRIALS,
         )
-        self.config["training_params"].update(study.best_params)
+        self.config[names.TRAINING_PARAMS].update(study.best_params)
 
     def predict(self: _LGBMModel, df_to_predict: pd.DataFrame) -> np.ndarray:
         """
@@ -156,7 +187,7 @@ class LGBMModel(Model):
         Returns:
             np.ndarray: Predictions.
         """
-        df_to_predict = df_to_predict[self.config["features"]]
+        df_to_predict = df_to_predict[self.config[names.FEATURES]]
         predictions_proba = self.model.predict(df_to_predict)
         predictions_label = np.round(predictions_proba)
         return predictions_label

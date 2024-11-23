@@ -13,7 +13,13 @@ from src.model.train import get_parser
 from typing import Optional
 
 
-def get_git_branch_name():
+def get_git_branch_name() -> str:
+    """
+    Get the current Git branch name.
+
+    Returns:
+        str: Current Git branch name.
+    """
     try:
         branch_name = (
             subprocess.check_output(["git", "branch", "--show-current"])
@@ -28,10 +34,20 @@ def get_git_branch_name():
 def init_parser(
     parser: Optional[argparse.ArgumentParser] = None,
 ) -> argparse.ArgumentParser:
+    """
+    Add arguments for the remote training parser.
+
+    Args:
+        parser (Optional[argparse.ArgumentParser], optional): Parser. Defaults to None.
+
+    Returns:
+        argparse.ArgumentParser: Parser for remote training.
+    """
     if parser is None:
         parser = argparse.ArgumentParser(
             description="Train a model on Kaggle using a script"
         )
+    # Notebook flag
     parser.add_argument(
         "-n",
         "--notebook_id",
@@ -39,13 +55,17 @@ def init_parser(
         help="Notebook name in kaggle",
         default=constants.NOTEBOOK_ID,
     )
+    # User flag
     parser.add_argument(
         "-u", "--user", type=str, help="Kaggle user", choices=list(kaggle_users.keys())
     )
+    # Branch flag
     parser.add_argument(
         "--branch", type=str, help="Git branch name", default=get_git_branch_name()
     )
+    # Push flag
     parser.add_argument("-p", "--push", action="store_true", help="Push")
+    # Download flag
     parser.add_argument(
         "-d", "--download", action="store_true", help="Download results"
     )
@@ -64,6 +84,20 @@ def prepare_notebook(
     output_dir: str = constants.OUTPUT_FOLDER,
     dataset_files: Optional[list] = None,
 ) -> None:
+    """
+    Prepare the Kaggle notebook.
+
+    Args:
+        output_nb_path (str): Output path.
+        exp (int): Experiment.
+        branch (str): Git branch.
+        git_user (str, optional): Git username. Defaults to None.
+        git_repo (str, optional): Git repository. Defaults to None.
+        template_nb_path (str, optional): Jupyter notebook template.
+            Defaults to os.path.join( constants.REMOTE_TRAINING_FOLDER, "remote_training.ipynb" ).
+        output_dir (str, optional): Output directory. Defaults to constants.OUTPUT_FOLDER.
+        dataset_files (Optional[list], optional): Kaglle datasets. Defaults to None.
+    """
     assert git_user is not None, "Please provide a git username for the repo"
     assert git_repo is not None, "Please provide a git repo name for the repo"
     expressions = [
@@ -76,6 +110,8 @@ def prepare_notebook(
     ]
     with open(template_nb_path) as f:
         template_nb = f.readlines()
+        # Replace expressions in the notebook template
+        # Use parser arguments to replace them
         for line_idx, li in enumerate(template_nb):
             for expr, expr_replace in expressions:
                 if f"!!!{expr}!!!" in li:
@@ -90,6 +126,18 @@ def prepare_notebook(
 def define_config(
     args: argparse.ArgumentParser, kaggle_user: dict, exp_str: str, notebook_id: str
 ) -> dict:
+    """
+    Define the configuration of the notebook.
+
+    Args:
+        args (argparse.ArgumentParser): Parser arguments.
+        kaggle_user (dict): Kaggle user.
+        exp_str (str): Experiment (string format).
+        notebook_id (str): ID of the notebook.
+
+    Returns:
+        dict: Configuration of the notebook.
+    """
     config = {
         "id": f"{kaggle_user['username']}/{exp_str}",
         "title": notebook_id.lower(),
@@ -100,6 +148,9 @@ def define_config(
         "enable_gpu": "true" if not args.cpu else "false",
         "enable_tpu": "false",
         "enable_internet": "true",
+        "full_pipeline": "ture" if args.full else "false",
+        "learning_pipeline": "ture" if args.learning else "false",
+        "testing_pipeline": "ture" if args.testing else "false",
         "dataset_sources": constants.KAGGLE_DATASET_LIST,
         "competition_sources": [],
         "kernel_sources": [],
@@ -109,6 +160,13 @@ def define_config(
 
 
 def main(argv):
+    """
+    Launch remote training.
+
+    Args:
+        argv (_type_): Parser arguments.
+    """
+    # Get parser arguments
     parser = init_parser()
     get_parser(parser)
     args = parser.parse_args(argv)
@@ -117,6 +175,7 @@ def main(argv):
     kaggle_user = kaggle_users[args.user]
     uname_kaggle = kaggle_user["username"]
     kaggle.api._load_config(kaggle_user)
+    # If needed, download results
     if args.download:
         tmp_dir = f"__tmp_{exp_str}"
         os.makedirs(tmp_dir, exist_ok=True)
@@ -128,6 +187,7 @@ def main(argv):
         )
         shutil.rmtree(tmp_dir, ignore_errors=True)
         return
+    # Launch notebook
     kernel_root = f"__nb_{uname_kaggle}"
     kernel_path = f"{kernel_root}/{exp_str}"
     os.makedirs(kernel_path, exist_ok=True)

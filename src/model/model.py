@@ -45,24 +45,42 @@ class Model(abc.ABC):
     """Abstract base class for ML models"""
 
     def __init__(self, id_experiment: int | None) -> None:
+        """
+        Initialize class instance.
+
+        Args:
+            id_experiment (int | None): ID of the experiment.
+        """
         self.id_experiment = id_experiment
         self.learning_scores = triple_nested_defaultdict()
         self.testing_scores = triple_nested_defaultdict()
         self.times = double_nested_defaultdict()
 
     def get_model_config(self: _Model) -> None:
+        """
+        Get the config of the experiment.
+
+        Args:
+            self (_Model): Class instance.
+        """
         if self.id_experiment in ml_config.EXPERIMENTS_CONFIGS:
             self.config = ml_config.EXPERIMENTS_CONFIGS[self.id_experiment]
         else:
             logging.info("No corresponding experiment")
-        if isinstance(self.config["training_params"]["metrics"], str):
-            self.config["training_params"]["metrics"] = [
-                self.config["training_params"]["metrics"]
+        if isinstance(self.config[names.TRAINING_PARAMS]["metrics"], str):
+            self.config[names.TRAINING_PARAMS]["metrics"] = [
+                self.config[names.TRAINING_PARAMS]["metrics"]
             ]
-        if isinstance(self.config["features"], str):
-            self.config["features"] = [self.config["features"]]
+        if isinstance(self.config[names.FEATURES], str):
+            self.config[names.FEATURES] = [self.config[names.FEATURES]]
 
     def define_model_path(self: _Model) -> None:
+        """
+        Define the folder to save the model.
+
+        Args:
+            self (_Model): Class instance.
+        """
         self.model_path = os.path.join(
             constants.OUTPUT_FOLDER,
             f"{ self.id_experiment }_{ self.config[names.MODEL_TYPE] }",
@@ -70,77 +88,133 @@ class Model(abc.ABC):
         os.makedirs(self.model_path, exist_ok=True)
 
     def initialize_scores(self: _Model) -> None:
+        """
+        Initialize all the scores of the model.
+
+        Args:
+            self (_Model): Class instance.
+        """
         for dataset in ["train", "valid"]:
-            for metric in self.config["training_params"]["metrics"]:
+            for metric in self.config[names.TRAINING_PARAMS]["metrics"]:
                 for score in ["scores", "best_scores"]:
                     self.learning_scores[dataset][metric][score] = []
                     if dataset == "train":
                         self.testing_scores[dataset][metric][score] = []
         self.testing_scores["train"]["metrics"] = {}
         self.testing_scores["test"]["metrics"] = {}
-        return None
 
     def preprocess_learning_set(
         self: _Model, df_learning: pd.DataFrame
     ) -> tuple[pd.DataFrame]:
-        if self.config["train_ratio"] == 1:
+        """
+        Preprocess the learning set.
+
+        Args:
+            self (_Model): Class instance.
+            df_learning (pd.DataFrame): Learning set.
+
+        Returns:
+            tuple[pd.DataFrame]: Train and valid sets (for learning).
+        """
+        # If no split bewteen train and valid (cross-validation)
+        if self.config[names.TRAIN_RATIO] == 1:
             df_train = preprocessing_learning_data(
-                df_learning=df_learning, train_ratio=self.config["train_ratio"]
+                df_learning=df_learning, train_ratio=self.config[names.TRAIN_RATIO]
             )
             df_valid = None
+        # If split between train and valid
         else:
             df_train, df_valid = preprocessing_learning_data(
-                df_learning=df_learning, train_ratio=self.config["train_ratio"]
+                df_learning=df_learning, train_ratio=self.config[names.TRAIN_RATIO]
             )
         return df_train, df_valid
 
     def preprocess_training_set(
         self: _Model, df_learning: pd.DataFrame
-    ) -> tuple[pd.DataFrame]:
+    ) -> pd.DataFrame:
+        """
+        Preprocess the training set.
+        The training is made on the whole learning set.
+
+        Args:
+            self (_Model): Class instance.
+            df_learning (pd.DataFrame): Learning set.
+
+        Returns:
+            pd.DataFrame: Training set
+        """
         df_train = preprocessing_learning_data(df_learning=df_learning, train_ratio=1)
         return df_train
 
     def preprocess_testing_set(self: _Model, df_testing: pd.DataFrame) -> pd.DataFrame:
+        """
+        Preprocess the testing set.
+
+        Args:
+            self (_Model): Class instance.
+            df_testing (pd.DataFrame): Testing set.
+
+        Returns:
+            pd.DataFrame: Prepreocessed testing set.
+        """
         df_test = preprocessing_testing_data(df_testing)
         return df_test
 
-    def drop_id_columns(self: _Model, df: pd.DataFrame) -> None:
-        return df.drop(columns=self.config["cols_id"])
+    def drop_id_columns(self: _Model, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Drop ID columns (useless for training and prediction).
+
+        Args:
+            self (_Model): Class instance.
+            df (pd.DataFrame): DataFrame (training set).
+
+        Returns:
+            pd.DataFrame: DataFrame without ID cols.
+        """
+        return df.drop(columns=self.config[names.COLS_ID])
 
     def select_features(self: _Model, df_train: pd.DataFrame) -> None:
-        if self.config["features"] is None:
-            self.config["features"] = df_train.columns.tolist()
-        if self.config["feature_selection"] is not None:
-            if "correlation" in self.config["feature_selection"]:
-                self.config["features"] = selecting_features_with_correlations(
+        if self.config[names.FEATURES] is None:
+            self.config[names.FEATURES] = df_train.columns.tolist()
+        if self.config[names.FEATURE_SELECTION] is not None:
+            if "correlation" in self.config[names.FEATURE_SELECTION]:
+                self.config[names.FEATURES] = selecting_features_with_correlations(
                     df=df_train,
-                    features=self.config["features"],
-                    target=self.config["target"],
+                    features=self.config[names.FEATURES],
+                    target=self.config[names.TARGET],
                 )
-            if "random_columns" in self.config["feature_selection"]:
-                self.config["features"] = selecting_features_with_random_columns(
+            if "random_columns" in self.config[names.FEATURE_SELECTION]:
+                self.config[names.FEATURES] = selecting_features_with_random_columns(
                     df=df_train,
-                    features=self.config["features"],
-                    target=self.config["target"],
+                    features=self.config[names.FEATURES],
+                    target=self.config[names.TARGET],
                 )
-            if "boruta" in self.config["feature_selection"]:
-                self.config["features"] = selecting_features_with_boruta(
+            if "boruta" in self.config[names.FEATURE_SELECTION]:
+                self.config[names.FEATURES] = selecting_features_with_boruta(
                     df=df_train,
-                    features=self.config["features"],
-                    target=self.config["target"],
+                    features=self.config[names.FEATURES],
+                    target=self.config[names.TARGET],
                 )
         return None
 
     def get_columns_to_keep(
         self: _Model,
         df_train: pd.DataFrame,
-    ) -> tuple[pd.DataFrame]:
+    ) -> None:
+        """
+        Get the list of features to keep.
+
+        Args:
+            self (_Model): Class instance.
+            df_train (pd.DataFrame): Training set.
+        """
         df_train_without_ids = self.drop_id_columns(df=df_train)
         self.select_features(df_train=df_train_without_ids)
-        self.config["features"] = [
-            col for col in self.config["features"] if col not in self.config["target"]
+        self.config[names.FEATURES] = [
+            col
+            for col in self.config[names.FEATURES]
+            if col not in self.config[names.TARGET]
         ]
-        return None
 
     @abc.abstractmethod
     def learn(
@@ -148,9 +222,27 @@ class Model(abc.ABC):
         df_train: pd.DataFrame,
         df_valid: pd.DataFrame,
     ) -> None:
-        return None
+        """
+        Learning function.
+        Get the loss of the model on both train and valid sets.
+        Used to find the best hyperparameters of the model.
+
+        Args:
+            self (_Model): Class instance.
+            df_train (pd.DataFrame): Train set.
+            df_valid (pd.DataFrame): Valid set.
+        """
 
     def cross_validate(self: _Model, df_train: pd.DataFrame):
+        """
+        Learning with cross-validation.
+        Get the average loss of the model over all iterations.
+        Used to find the best hyperparameters of the model.
+
+        Args:
+            self (_Model): Class instance.
+            df_train (pd.DataFrame): Train set.
+        """
         kf = KFold(
             n_splits=self.config["cross_validation"],
             shuffle=True,
@@ -161,33 +253,52 @@ class Model(abc.ABC):
             df_train_cv = df_train.iloc[train_index]
             df_valid_cv = df_train.iloc[valid_index]
             self.learn(df_train=df_train_cv, df_valid=df_valid_cv)
-        for metric in self.config["training_params"]["metrics"]:
+        for metric in self.config[names.TRAINING_PARAMS]["metrics"]:
             scores[metric] = self.learning_scores["valid"][metric]["best_scores"]
         for metric, scores_list in scores.items():
             self.learning_scores["cross_validation"][metric]["average_score"] = np.mean(
                 scores_list
             )
-        return None
 
     @abc.abstractmethod
     def fine_tune_objective(
         self: _Model, df_train: pd.DataFrame, df_valid: pd.DataFrame
     ) -> None:
-        return None
+        """
+        Define the objective function for the fine-tuning of the hyperparameters.
+
+        Args:
+            self (_Model): Class instance.
+            df_train (pd.DataFrame): Train set.
+            df_valid (pd.DataFrame): Valid set.
+        """
 
     @abc.abstractmethod
     def fine_tune(self: _Model, df_train: pd.DataFrame, df_valid: pd.DataFrame) -> None:
-        return None
+        """
+        Fine-tune the hyperparameters of the model.
+
+        Args:
+            self (_Model): Class instance.
+            df_train (pd.DataFrame): Train set.
+            df_valid (pd.DataFrame): Valid set.
+        """
 
     @abc.abstractmethod
     def train(
         self: _Model,
         df_train: pd.DataFrame,
     ) -> None:
-        return None
+        """
+        Train the model.
+
+        Args:
+            self (_Model): Class instance.
+            df_train (pd.DataFrame): Train set (whole learning set).
+        """
 
     @abc.abstractmethod
-    def predict(self: _Model, df_to_predict: pd.DataFrame) -> pd.Series:
+    def predict(self: _Model, df_to_predict: pd.DataFrame) -> np.ndarray:
         """
         Predict outputs for a given dataset.
 
@@ -196,12 +307,12 @@ class Model(abc.ABC):
             df_to_predict (pd.DataFrame): DataFrame to predict.
 
         Returns:
-            pd.Series: Predictions.
+            np.ndarray: Predictions.
         """
 
     def score(self: _Model, df_to_evaluate: pd.DataFrame) -> dict:
         """
-        Get scores for a given dataset.
+        Compute metrics for a given dataset.
 
         Args:
             self (_Model): Class instance.
@@ -211,7 +322,7 @@ class Model(abc.ABC):
             dict: Dictionary with metric names as keys and values as values.
         """
         label_pred = self.predict(df_to_evaluate)
-        label_true = df_to_evaluate[self.config["target"]]
+        label_true = df_to_evaluate[self.config[names.TARGET]]
         metrics = compute_evaluation_metrics(label_true, label_pred)
         return metrics
 
@@ -220,10 +331,25 @@ class Model(abc.ABC):
         df_train: pd.DataFrame,
         df_test: pd.DataFrame,
     ) -> None:
+        """
+        Get metrics on train and test sets.
+
+        Args:
+            self (_Model): Class instance.
+            df_train (pd.DataFrame): Train set.
+            df_test (pd.DataFrame): Test set.
+        """
         self.testing_scores["train"]["metrics"] = self.score(df_to_evaluate=df_train)
         self.testing_scores["test"]["metrics"] = self.score(df_to_evaluate=df_test)
 
     def confusion_matrix(self: _Model, df_test: pd.DataFrame) -> None:
+        """
+        Save the confusion matrix on the test set.
+
+        Args:
+            self (_Model): Class instance.
+            df_test (pd.DataFrame): Test set.
+        """
         output_folder = os.path.join(self.model_path, "testing")
         os.makedirs(output_folder, exist_ok=True)
         y_true = df_test[names.TARGET]
@@ -235,23 +361,37 @@ class Model(abc.ABC):
         )
 
     def save_plots_errors(self: _Model, df_test: pd.DataFrame) -> None:
+        """
+        Save the scatter plots to analyze errors on the test set.
+
+        Args:
+            self (_Model): Class instance.
+            df_test (pd.DataFrame): Test set.
+        """
         output_folder = os.path.join(self.model_path, "testing", "plots")
         os.makedirs(output_folder, exist_ok=True)
         df_test[names.PREDICTION] = self.predict(df_test)
-        cols = [col for col in self.config["features"]] + [
+        cols = [col for col in self.config[names.FEATURES]] + [
             names.TARGET,
             names.PREDICTION,
         ]
         df_errors = df_test[cols]
         plot_all_scatter_feature_given_label(
-            df=df_errors, cols=self.config["features"], output_folder=output_folder
+            df=df_errors, cols=self.config[names.FEATURES], output_folder=output_folder
         )
 
     def saves_stats_errors(self: _Model, df_test: pd.DataFrame) -> None:
+        """
+        Save the tables that describe the errors on the test set.
+
+        Args:
+            self (_Model): Class instance.
+            df_test (pd.DataFrame): Test set.
+        """
         output_folder = os.path.join(self.model_path, "testing", "stats")
         os.makedirs(output_folder, exist_ok=True)
         df_test[names.PREDICTION] = self.predict(df_test)
-        cols = [col for col in self.config["features"]] + [
+        cols = [col for col in self.config[names.FEATURES]] + [
             names.TARGET,
             names.PREDICTION,
         ]
@@ -259,13 +399,20 @@ class Model(abc.ABC):
         plot_describe_results(df=df_errors, output_folder=output_folder)
 
     def evaluate_errors(self: _Model, df_test: pd.DataFrame) -> None:
+        """
+        Save all metrics on errors.
+
+        Args:
+            self (_Model): Class instance.
+            df_test (pd.DataFrame): Test set.
+        """
         self.confusion_matrix(df_test=df_test)
         self.save_plots_errors(df_test=df_test)
         self.saves_stats_errors(df_test=df_test)
 
     def save_config(self: _Model) -> None:
         """
-        Save a given metric.
+        Save the config of the model.
 
         Args:
             self (_Model): Class instance.
@@ -276,7 +423,7 @@ class Model(abc.ABC):
 
     def save_metrics(self: _Model, phase: str) -> None:
         """
-        Save a given metric.
+        Save the metrics.
 
         Args:
             self (_Model): Class instance.
@@ -295,7 +442,7 @@ class Model(abc.ABC):
 
     def save_model(self: _Model) -> None:
         """
-        Save model.
+        Save the model.
 
         Args:
             self (_Model): Class instance.
@@ -306,7 +453,14 @@ class Model(abc.ABC):
     @classmethod
     def load(cls, id_experiment: int, model_type: str) -> _Model:
         """
-        Load saved model.
+        Load a saved model.
+
+        Args:
+            id_experiment (int): ID of the experiment.
+            model_type (str): Model type.
+
+        Returns:
+            _Model: Loaded modeL.
         """
         model_path = os.path.join(
             constants.OUTPUT_FOLDER,
@@ -317,6 +471,13 @@ class Model(abc.ABC):
         return model
 
     def learning_pipeline(self: _Model, df_learning: pd.DataFrame) -> None:
+        """
+        Do the whole learning pipeline.
+
+        Args:
+            self (_Model): Class instance.
+            df_learning (pd.DataFrame): Learning set.
+        """
         self.get_model_config()
         self.define_model_path()
         self.initialize_scores()
@@ -334,12 +495,22 @@ class Model(abc.ABC):
         self.save_metrics(phase="learning")
         self.save_model()
 
-    def training_pipeline(
+    def testing_pipeline(
         self: _Model,
         df_learning: pd.DataFrame,
         df_testing: pd.DataFrame,
         is_full_pipeline: bool = False,
     ) -> None:
+        """
+        Do the whole training pipeline.
+
+        Args:
+            self (_Model): Class instance.
+            df_learning (pd.DataFrame): Learning set.
+            df_testing (pd.DataFrame): Testing set.
+            is_full_pipeline (bool, optional): Whether it is included in the whole pipeline or not.
+                Defaults to False.
+        """
         if not is_full_pipeline:
             self.get_model_config()
             self.define_model_path()
@@ -360,7 +531,15 @@ class Model(abc.ABC):
     def full_pipeline(
         self: _Model, df_learning: pd.DataFrame, df_testing: pd.DataFrame
     ) -> None:
+        """
+        Do the full pipeline (learning, training and testing).
+
+        Args:
+            self (_Model): Class instance.
+            df_learning (pd.DataFrame): Learning set.
+            df_testing (pd.DataFrame): Testing set.
+        """
         self.learning_pipeline(df_learning=df_learning)
-        self.training_pipeline(
+        self.testing_pipeline(
             df_learning=df_learning, df_testing=df_testing, is_full_pipeline=True
         )

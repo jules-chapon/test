@@ -3,7 +3,7 @@
 import pandas as pd
 from datasets import load_dataset
 
-from src.configs.constants import HF_DATASET_FOLDER, HF_DATASET_FILES, TRAIN_RATIO
+from src.configs.constants import HF_DATASET_FOLDER, HF_DATASET_FILES
 
 
 def load_data_from_hf(is_train: bool) -> pd.DataFrame:
@@ -61,7 +61,7 @@ def load_data(is_train: bool, is_local: bool) -> pd.DataFrame:
 
 
 def preprocessing_learning_data(
-    df_learning: pd.DataFrame, train_ratio: float = TRAIN_RATIO
+    df_learning: pd.DataFrame, train_ratio: float
 ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
     """
     Preprocess the learning data.
@@ -71,7 +71,7 @@ def preprocessing_learning_data(
         df_learning (pd.DataFrame): Learning dataset.
         train_ratio (float, optional) :
             Ratio of training data (the remaining will be used for validation).
-            If train_ratio == 1, there won't be any validation set. Default to TRAIN_RATIO.
+            If train_ratio == 1, there won't be any validation set.
 
     Returns:
         pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]: f train_ratio == 1, training dataset.

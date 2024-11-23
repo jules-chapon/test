@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 import logging
 
 from src.configs import constants
-from src.configs.ml_config import TARGET
+from src.configs.names import TARGET
 
 
 def selecting_features_with_boruta(
@@ -106,6 +106,7 @@ def selecting_features_with_correlations(
     Returns:
         list: Selected features with correlations.
     """
+    # Remove features that not correlated with the target
     correlation_with_label = (
         df[features].corr(method=constants.CORR_TYPE)[target].drop(target)
     )
@@ -116,6 +117,8 @@ def selecting_features_with_correlations(
     correlation_matrix = df[selected_features].corr()
     threshold_features = constants.THRESHOLD_CORR_FEATURE
     to_drop = set()
+    # Remove features that are correlated with other features
+    # Keep the one that is more correlated with the target
     for i in range(len(correlation_matrix.columns)):
         for j in range(i):
             if abs(correlation_matrix.iloc[i, j]) > threshold_features:

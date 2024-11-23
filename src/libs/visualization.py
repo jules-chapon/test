@@ -7,7 +7,7 @@ import pandas as pd
 
 from ipywidgets import fixed
 
-from src.configs import constants, ml_config, names
+from src.configs import names
 
 
 def plot_scatter_feature(
@@ -17,12 +17,24 @@ def plot_scatter_feature(
     target: str = names.TARGET,
     output_path: str | None = None,
 ) -> None:
+    """
+    Scatter plot between two features.
+
+    Args:
+        df (pd.DataFrame): DataFrame.
+        feature_name_1 (str): Name of the feature 1.
+        feature_name_2 (str): Name of the feature 2.
+        target (str, optional): Name of the target column. Defaults to names.TARGET.
+        output_path (str | None, optional): Path to save the plot. Defaults to None.
+    """
     if output_path is not None:
         plt.ioff()
+    # Find different labels and associate them with colors
     unique_targets = df[target].unique()
     palette = sns.color_palette("bright", len(unique_targets))
     target_colors = {target: color for target, color in zip(unique_targets, palette)}
     plt.figure(figsize=(10, 6))
+    # Plot points for a given label
     for target_value, color in target_colors.items():
         subset = df[df[target] == target_value]
         plt.scatter(
@@ -45,20 +57,31 @@ def plot_scatter_feature(
 def plot_slider_scatter_feature(
     df: pd.DataFrame, subset_features: list | None = None
 ) -> None:
+    """
+    Slider with all scatter plots between features.
+
+    Args:
+        df (pd.DataFrame): DataFrame.
+        subset_features (list | None, optional): Subset of features to plot.
+            Defaults to None.
+    """
     if subset_features is not None:
         list_features = subset_features
     else:
         list_features = df.columns
+    # Select feature 1
     feature_selection_1 = widgets.Dropdown(
         options=list_features,
         description="Feature 1",
         disabled=False,
     )
+    # Select feature 2
     feature_selection_2 = widgets.Dropdown(
         options=list_features,
         description="Feature 2",
         disabled=False,
     )
+    # Widget
     widgets.interact(
         plot_scatter_feature,
         df=fixed(df),
@@ -73,6 +96,15 @@ def plot_boxplot(
     target: str = names.TARGET,
     output_path: str | None = None,
 ) -> None:
+    """
+    Boxplots of a feature given the different labels.
+
+    Args:
+        df (pd.DataFrame): DataFrame.
+        feature_name (str): Name of the feature.
+        target (str, optional): Name of the target column. Defaults to names.TARGET.
+        output_path (str | None, optional): Path to save the plot. Defaults to None.
+    """
     if output_path is not None:
         plt.ioff()
     plt.figure(figsize=(10, 6))
@@ -94,15 +126,25 @@ def plot_boxplot(
 
 
 def plot_slider_boxplot(df: pd.DataFrame, subset_features: list | None = None) -> None:
+    """
+    Slider with all boxplots.
+
+    Args:
+        df (pd.DataFrame): DataFrame.
+        subset_features (list | None, optional): Subset of features to plot.
+            Defaults to None.
+    """
     if subset_features is not None:
         list_features = subset_features
     else:
         list_features = df.columns
+    # Select feature
     feature_selection = widgets.Dropdown(
         options=list_features,
         description="Feature",
         disabled=False,
     )
+    # Widget
     widgets.interact(
         plot_boxplot,
         df=fixed(df),
@@ -116,6 +158,15 @@ def plot_correlation_with_target(
     target: str = names.TARGET,
     output_path: str | None = None,
 ) -> None:
+    """
+    Histogram with the features that are most correlated with the target.
+
+    Args:
+        df (pd.DataFrame): DataFrame.
+        top_k (int): Top k features to consider.
+        target (str, optional): Name of the target column. Defaults to names.TARGET.
+        output_path (str | None, optional): Path to save the plot. Defaults to None.
+    """
     if output_path is not None:
         plt.ioff()
     correlations = df.corr()[target].drop(target).abs().sort_values(ascending=False)
@@ -144,6 +195,16 @@ def plot_correlation_matrix(
     target: str = names.TARGET,
     output_path: str | None = None,
 ) -> None:
+    """
+    Correlation matrix between features.
+
+    Args:
+        df (pd.DataFrame): DataFrame.
+        subset_features (list | None, optional): Subset of features to plot.
+            Defaults to None.
+        target (str, optional): Name of the target column. Defaults to names.TARGET.
+        output_path (str | None, optional): Path to save the plot. Defaults to None.
+    """
     if output_path is not None:
         plt.ioff()
     if subset_features is not None:
@@ -163,6 +224,13 @@ def plot_correlation_matrix(
 def plot_training_curves(
     dict_metrics: dict[str, list[float]], output_path: str | None = None
 ) -> None:
+    """
+    Plot the training curves with all metrics.
+
+    Args:
+        dict_metrics (dict[str, list[float]]): Dictionary with metrics and their values.
+        output_path (str | None, optional): Path to save the plot. Defaults to None.
+    """
     if output_path is not None:
         plt.ioff()
     plt.figure(figsize=(10, 6))
@@ -181,6 +249,13 @@ def plot_training_curves(
 def plot_df_description_as_image(
     df_summary: pd.DataFrame, output_path: str | None = None
 ) -> None:
+    """
+    Plot and save the description of a dataframe as an image.
+
+    Args:
+        df_summary (pd.DataFrame): Summary of a DataFrame.
+        output_path (str | None, optional): Path to save the plot. Defaults to None.
+    """
     if output_path is not None:
         plt.ioff()
     fig, ax = plt.subplots(figsize=(10, 4))

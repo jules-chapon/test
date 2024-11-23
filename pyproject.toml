@@ -13,6 +13,7 @@ kaggle = "^1.6.17"
 poetry = "^1.7.1"
 python = "^3.10"
 uv = "^0.4.29"
+tornado = "^6.4.2"
 
 # Formatting and good practices
 black = "^24.7.0"

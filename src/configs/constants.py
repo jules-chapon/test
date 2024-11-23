@@ -1,14 +1,10 @@
 """Constants"""
 
-from pathlib import Path
-
 ###############################################################
 #                                                             #
 #                             PATHS                           #
 #                                                             #
 ###############################################################
-
-ROOT_DIR = Path(__file__).parent
 
 OUTPUT_FOLDER = "output"
 
@@ -41,10 +37,6 @@ KAGGLE_DATASET_LIST = []  # Keep free unless you need to access kaggle datasets.
 HF_DATASET_FOLDER = "jules-chapon/train-qrt-2024"
 
 HF_DATASET_FILES = {"train": "train.csv", "test": "test.csv"}
-
-### TRAINING RATIO
-
-TRAIN_RATIO = 0.8
 
 
 ###############################################################

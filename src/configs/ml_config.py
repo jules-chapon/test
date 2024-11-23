@@ -5,11 +5,17 @@ from src.configs import constants, names
 
 ###############################################################
 #                                                             #
-#                           METRICS                           #
+#                           CONSTANTS                         #
 #                                                             #
 ###############################################################
 
-TARGET = "target"
+NB_OPTUNA_TRIALS = 3
+
+###############################################################
+#                                                             #
+#                           METRICS                           #
+#                                                             #
+###############################################################
 
 METRICS_TO_SAVE = [names.SCORES, names.TIMES]
 
@@ -25,9 +31,11 @@ EXPERIMENTS_CONFIGS = {
         names.MODEL_TYPE: names.LIGHTGBM,
         "train_ratio": 0.8,
         "feature_selection": None,
-        "target": TARGET,
+        names.TARGET: names.TARGET,
         "features": None,
         "cols_id": "id",
+        "cross_validation": 3,
+        "fine_tuning": False,
         "training_params": {
             "objective": "binary",
             "metrics": ["binary_logloss", "auc"],
@@ -44,8 +52,6 @@ EXPERIMENTS_CONFIGS = {
             "feature_fraction": 0.8,
             "lambda_l1": 0.1,
         },
-        "cross_validation": 3,
-        "fine_tuning": False,
     },
     1: {},
     2: {},
