@@ -52,6 +52,7 @@ class Model(abc.ABC):
             id_experiment (int | None): ID of the experiment.
         """
         self.id_experiment = id_experiment
+        self.params = ml_config.EXPERIMENTS_CONFIGS[id_experiment]
         self.learning_scores = triple_nested_defaultdict()
         self.testing_scores = triple_nested_defaultdict()
         self.times = double_nested_defaultdict()

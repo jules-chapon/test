@@ -78,6 +78,7 @@ def prepare_notebook(
     branch: str,
     git_user: str = None,
     git_repo: str = None,
+    pipeline: str = "full",
     template_nb_path: str = os.path.join(
         constants.REMOTE_TRAINING_FOLDER, "remote_training.ipynb"
     ),
@@ -105,6 +106,7 @@ def prepare_notebook(
         ("branch", f"'{branch}'"),
         ("git_user", f"'{git_user}'"),
         ("git_repo", f"'{git_repo}'"),
+        ("pipeline", f"'{pipeline}'"),
         ("output_dir", "None" if output_dir is None else f"'{output_dir}'"),
         ("dataset_files", "None" if dataset_files is None else f"{dataset_files}"),
     ]
@@ -148,9 +150,9 @@ def define_config(
         "enable_gpu": "true" if not args.cpu else "false",
         "enable_tpu": "false",
         "enable_internet": "true",
-        "full_pipeline": "ture" if args.full else "false",
-        "learning_pipeline": "ture" if args.learning else "false",
-        "testing_pipeline": "ture" if args.testing else "false",
+        "full_pipeline": "true" if args.full else "false",
+        "learning_pipeline": "true" if args.learning else "false",
+        "testing_pipeline": "true" if args.testing else "false",
         "dataset_sources": constants.KAGGLE_DATASET_LIST,
         "competition_sources": [],
         "kernel_sources": [],
@@ -172,6 +174,12 @@ def main(argv):
     args = parser.parse_args(argv)
     notebook_id = args.notebook_id
     exp_str = "_".join(f"{exp:05d}" for exp in args.exp)
+    if args.full:
+        pipeline = "full"
+    elif args.learning:
+        pipeline = "learning"
+    elif args.testing:
+        pipeline = "testing"
     kaggle_user = kaggle_users[args.user]
     uname_kaggle = kaggle_user["username"]
     kaggle.api._load_config(kaggle_user)
@@ -197,6 +205,7 @@ def main(argv):
         f"{kernel_path}/{notebook_id}" + ".ipynb",
         args.exp,
         branch,
+        pipeline=pipeline,
         git_user=constants.GIT_USER,
         git_repo=constants.GIT_REPO,
     )
